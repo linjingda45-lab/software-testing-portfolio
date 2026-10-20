@@ -1,0 +1,466 @@
+{
+  "info": {
+    "name": "数字内容管理系统-功能测试",
+    "description": "覆盖登录、内容新增、修改、条件查询、状态流转与任务状态管理的 Postman 集合。先执行 01 登录，token 会自动写入集合变量。",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:8082"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "contentId",
+      "value": ""
+    },
+    {
+      "key": "taskId",
+      "value": "1"
+    }
+  ],
+  "item": [
+    {
+      "name": "01 登录",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const body = pm.response.json();",
+              "pm.test('状态码 200', () => pm.response.to.have.status(200));",
+              "pm.test('业务码为 0', () => pm.expect(body.code).to.eql(0));",
+              "pm.test('返回 token', () => pm.expect(body.data.token).to.be.a('string'));",
+              "pm.collectionVariables.set('token', body.data.token);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"123456\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "login"
+          ]
+        }
+      }
+    },
+    {
+      "name": "02 内容新增",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const body = pm.response.json();",
+              "pm.test('状态码 200', () => pm.response.to.have.status(200));",
+              "pm.test('初始状态为 DRAFT', () => pm.expect(body.data.status).to.eql('DRAFT'));",
+              "pm.collectionVariables.set('contentId', body.data.id);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Postman 新增内容\",\n  \"contentType\": \"NEWS\",\n  \"body\": \"使用 Postman 验证内容新增功能。\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/contents",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "contents"
+          ]
+        }
+      }
+    },
+    {
+      "name": "03 内容详情",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const body = pm.response.json();",
+              "pm.test('状态码 200', () => pm.response.to.have.status(200));",
+              "pm.test('标题一致', () => pm.expect(body.data.title).to.eql('Postman 新增内容'));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/contents/{{contentId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "contents",
+            "{{contentId}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "04 内容修改",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const body = pm.response.json();",
+              "pm.test('状态码 200', () => pm.response.to.have.status(200));",
+              "pm.test('标题已更新', () => pm.expect(body.data.title).to.eql('Postman 修改后的标题'));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Postman 修改后的标题\",\n  \"body\": \"修改后的正文内容。\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/contents/{{contentId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "contents",
+            "{{contentId}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "05 条件查询（按状态）",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const body = pm.response.json();",
+              "pm.test('状态码 200', () => pm.response.to.have.status(200));",
+              "pm.test('结果均满足状态条件', () => body.data.list.forEach(item => pm.expect(item.status).to.eql('DRAFT')));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/contents?status=DRAFT&page=1&size=10",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "contents"
+          ],
+          "query": [
+            {
+              "key": "status",
+              "value": "DRAFT"
+            },
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "size",
+              "value": "10"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "06 提交审核",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const body = pm.response.json();",
+              "pm.test('状态码 200', () => pm.response.to.have.status(200));",
+              "pm.test('状态为 PENDING', () => pm.expect(body.data.status).to.eql('PENDING'));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"PENDING\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/contents/{{contentId}}/status",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "contents",
+            "{{contentId}}",
+            "status"
+          ]
+        }
+      }
+    },
+    {
+      "name": "07 发布内容",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const body = pm.response.json();",
+              "pm.test('状态码 200', () => pm.response.to.have.status(200));",
+              "pm.test('状态为 PUBLISHED', () => pm.expect(body.data.status).to.eql('PUBLISHED'));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"PUBLISHED\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/contents/{{contentId}}/status",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "contents",
+            "{{contentId}}",
+            "status"
+          ]
+        }
+      }
+    },
+    {
+      "name": "08 查询内容的关联任务",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const body = pm.response.json();",
+              "pm.test('状态码 200', () => pm.response.to.have.status(200));",
+              "pm.test('发布后任务应为 SUCCESS', () => body.data.forEach(task => pm.expect(task.status).to.eql('SUCCESS')));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/contents/{{contentId}}/tasks",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "contents",
+            "{{contentId}}",
+            "tasks"
+          ]
+        }
+      }
+    },
+    {
+      "name": "09 任务列表",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const body = pm.response.json();",
+              "pm.test('状态码 200', () => pm.response.to.have.status(200));",
+              "const pending = body.data.list.find(task => task.status === 'PENDING');",
+              "if (pending) { pm.collectionVariables.set('taskId', pending.id); }"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/tasks?page=1&size=10",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "tasks"
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "size",
+              "value": "10"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "10 任务状态更新：PENDING -> RUNNING",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const body = pm.response.json();",
+              "pm.test('状态码 200', () => pm.response.to.have.status(200));",
+              "pm.test('状态为 RUNNING', () => pm.expect(body.data.status).to.eql('RUNNING'));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"RUNNING\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/tasks/{{taskId}}/status",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "tasks",
+            "{{taskId}}",
+            "status"
+          ]
+        }
+      }
+    },
+    {
+      "name": "11 未登录访问内容列表（异常场景）",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const body = pm.response.json();",
+              "pm.test('状态码 401', () => pm.response.to.have.status(401));",
+              "pm.test('业务码为 1003', () => pm.expect(body.code).to.eql(1003));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/contents",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "contents"
+          ]
+        }
+      }
+    }
+  ]
+}
